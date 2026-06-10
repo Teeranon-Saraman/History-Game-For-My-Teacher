@@ -996,13 +996,14 @@ function drawOldMan(sx,sy,size){
 
 function drawNameTag(text,cx,ty){
   ctx.font='bold 11px Kanit,sans-serif';
-  const W=ctx.measureText(text).width+16;
+  const W=Math.ceil(ctx.measureText(text).width)+18;
+  const H=20;
   ctx.fillStyle='rgba(0,0,0,0.70)';
-  ctx.fillRect(cx-W/2,ty,W,18);
+  ctx.fillRect(Math.round(cx-W/2),Math.round(ty),W,H);
   ctx.fillStyle='#FFD166';
   ctx.textAlign='center';
-  ctx.textBaseline='top';
-  ctx.fillText(text,cx,ty+3);
+  ctx.textBaseline='middle';
+  ctx.fillText(text,Math.round(cx),Math.round(ty+H/2)+1);
 }
 
 function drawMinimap(W,H){

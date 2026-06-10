@@ -61,7 +61,22 @@ html, body {
 #s-title {
   background: radial-gradient(ellipse at 50% 40%, #2C1500 0%, #0A0500 100%);
 }
-.title-logo { font-size: 72px; margin-bottom: 0; }
+.title-content {
+  width: min(520px, calc(100% - 40px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.title-logo {
+  width: 96px; height: 96px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 58px; line-height: 1;
+  margin: 0 auto 10px;
+  transform-origin: center;
+  animation: spin 1.5s linear infinite;
+  filter: drop-shadow(0 0 24px rgba(255,209,102,.35));
+}
 .title-text {
   font-size: clamp(28px, 6vw, 52px);
   font-weight: 900;
@@ -72,7 +87,7 @@ html, body {
   margin-bottom: 8px;
 }
 .title-sub { color: var(--parch); font-size: 15px; margin-bottom: 32px; }
-.key-hint  { color: #5C3A1A; font-size: 12px; margin-top: 12px; text-align: center; }
+.key-hint  { width: 100%; color: #5C3A1A; font-size: 12px; margin-top: 12px; text-align: center; }
 
 #s-charsel { background: radial-gradient(ellipse at 50% 40%, #2C1500 0%, #0A0500 100%); }
 .charsel-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; max-width: 500px; padding: 20px; }
