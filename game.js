@@ -183,6 +183,8 @@ let interactPressed=false;
 let joystickDir=null;
 let audioCtx=null;
 let audioMaster=null;
+let bgMusic=null;
+let bgMusicStarted=false;
 
 let mapTiles=[], tileRotations=[], digSites=[];
 const NPC_POS   = {x:3,y:4};
@@ -1065,6 +1067,15 @@ function openDialog(name,text){
 let quizSite=null, quizTimer=null, quizSec=15;
 const ERA_NAMES={paleo:'ยุคหินเก่า',meso:'ยุคหินกลาง',neo:'ยุคหินใหม่'};
 
+function shuffledChoiceOrder(count){
+  const order=Array.from({length:count},(_,i)=>i);
+  for(let i=order.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [order[i],order[j]]=[order[j],order[i]];
+  }
+  return order;
+}
+
 function openQuiz(site){
   quizSite=site;
   const q=QUESTIONS[site.qIdx];
@@ -1079,11 +1090,12 @@ function openQuiz(site){
   const labels=['ก.','ข.','ค.','ง.'];
   const cf=document.getElementById('qz-choices');
   cf.innerHTML='';
-  q.c.forEach((ch,i)=>{
+  shuffledChoiceOrder(q.c.length).forEach((i,slot)=>{
     const b=document.createElement('button');
     b.className='qz-choice';
-    b.textContent=labels[i]+' '+ch;
-    b.addEventListener('pointerdown',()=>playSound('click'),{passive:true});
+    b.dataset.answer=i;
+    b.textContent=labels[slot]+' '+q.c[i];
+    b.addEventListener('pointerdown',()=>{startBgMusic();playSound('click');},{passive:true});
     b.addEventListener('click',()=>answerQuiz(i,b));
     cf.appendChild(b);
   });
@@ -1120,7 +1132,7 @@ function answerQuiz(chosen,btn){
     checkLevelUp();
   } else {
     playSound('wrong');
-    document.querySelectorAll('.qz-choice')[q.a].classList.add('correct');
+    document.querySelector(`.qz-choice[data-answer="${q.a}"]`)?.classList.add('correct');
     btn.classList.add('wrong');
     combo=0;lives=Math.max(0,lives-1);
     quizSite.found=true;artifactsFound++;
@@ -1137,7 +1149,7 @@ function quizTimeout(){
   playSound('wrong');
   document.querySelectorAll('.qz-choice').forEach(b=>b.disabled=true);
   const q=QUESTIONS[quizSite.qIdx];
-  document.querySelectorAll('.qz-choice')[q.a].classList.add('correct');
+  document.querySelector(`.qz-choice[data-answer="${q.a}"]`)?.classList.add('correct');
   combo=0;lives=Math.max(0,lives-1);
   quizSite.found=true;artifactsFound++;answered++;
   const fb=document.getElementById('qz-feedback');
@@ -1253,6 +1265,7 @@ function resizeCanvas(){
 }
 
 window.addEventListener('keydown',e=>{
+  startBgMusic();
   if((e.key==='e'||e.key==='E'||e.key===' ')&&!e.repeat) interactPressed=true;
   keyDown[e.key]=true;
   if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
@@ -1268,11 +1281,25 @@ function getAudio(){
   if(!audioCtx){
     audioCtx=new AudioEngine();
     audioMaster=audioCtx.createGain();
-    audioMaster.gain.value=0.18;
+    audioMaster.gain.value=10;
     audioMaster.connect(audioCtx.destination);
   }
   if(audioCtx.state==='suspended') audioCtx.resume();
   return audioCtx;
+}
+
+function startBgMusic(){
+  if(bgMusicStarted) return;
+  if(!bgMusic){
+    bgMusic=new Audio('sound/OST.mp3');
+    bgMusic.loop=true;
+    bgMusic.volume=0.34;
+    bgMusic.addEventListener('ended',()=>{
+      bgMusic.currentTime=0;
+      bgMusic.play().catch(()=>{});
+    });
+  }
+  bgMusic.play().then(()=>{bgMusicStarted=true;}).catch(()=>{});
 }
 
 function playTone(ctx,freq,offset,duration,type,gainValue,endFreq){
@@ -1363,7 +1390,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   });
 
   document.querySelectorAll('button,.char-card').forEach(el=>{
-    el.addEventListener('pointerdown',()=>playSound('click'),{passive:true});
+    el.addEventListener('pointerdown',()=>{startBgMusic();playSound('click');},{passive:true});
   });
 
   document.getElementById('btn-start').addEventListener('click',()=>showScreen('s-charsel'));
