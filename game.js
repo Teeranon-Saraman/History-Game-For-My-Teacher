@@ -181,6 +181,8 @@ const keyDown={};
 let interactFlag=false;
 let interactPressed=false;
 let joystickDir=null;
+let audioCtx=null;
+let audioMaster=null;
 
 let mapTiles=[], tileRotations=[], digSites=[];
 const NPC_POS   = {x:3,y:4};
@@ -1081,6 +1083,7 @@ function openQuiz(site){
     const b=document.createElement('button');
     b.className='qz-choice';
     b.textContent=labels[i]+' '+ch;
+    b.addEventListener('pointerdown',()=>playSound('click'),{passive:true});
     b.addEventListener('click',()=>answerQuiz(i,b));
     cf.appendChild(b);
   });
@@ -1105,6 +1108,7 @@ function answerQuiz(chosen,btn){
   answered++;
   const fb=document.getElementById('qz-feedback');
   if(chosen===q.a){
+    playSound('correct');
     btn.classList.add('correct');
     combo++;maxCombo=Math.max(maxCombo,combo);
     const pts=Math.floor(q.pts*(1+combo*.5));
@@ -1115,6 +1119,7 @@ function answerQuiz(chosen,btn){
     if(combo>1) floatText(combo+'x COMBO! 🔥',window.innerWidth/2,window.innerHeight*.45);
     checkLevelUp();
   } else {
+    playSound('wrong');
     document.querySelectorAll('.qz-choice')[q.a].classList.add('correct');
     btn.classList.add('wrong');
     combo=0;lives=Math.max(0,lives-1);
@@ -1129,6 +1134,7 @@ function answerQuiz(chosen,btn){
 }
 
 function quizTimeout(){
+  playSound('wrong');
   document.querySelectorAll('.qz-choice').forEach(b=>b.disabled=true);
   const q=QUESTIONS[quizSite.qIdx];
   document.querySelectorAll('.qz-choice')[q.a].classList.add('correct');
@@ -1256,6 +1262,49 @@ window.addEventListener('selectstart',e=>e.preventDefault());
 window.addEventListener('dragstart',e=>e.preventDefault());
 window.addEventListener('contextmenu',e=>e.preventDefault());
 
+function getAudio(){
+  const AudioEngine=window.AudioContext||window.webkitAudioContext;
+  if(!AudioEngine) return null;
+  if(!audioCtx){
+    audioCtx=new AudioEngine();
+    audioMaster=audioCtx.createGain();
+    audioMaster.gain.value=0.18;
+    audioMaster.connect(audioCtx.destination);
+  }
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(ctx,freq,offset,duration,type,gainValue,endFreq){
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  const start=ctx.currentTime+offset;
+  const end=start+duration;
+  osc.type=type;
+  osc.frequency.setValueAtTime(freq,start);
+  if(endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(1,endFreq),end);
+  gain.gain.setValueAtTime(0.001,start);
+  gain.gain.linearRampToValueAtTime(gainValue,start+0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001,end);
+  osc.connect(gain);
+  gain.connect(audioMaster);
+  osc.start(start);
+  osc.stop(end+0.03);
+}
+
+function playSound(type){
+  const ctx=getAudio();
+  if(!ctx) return;
+  if(type==='click'){
+    playTone(ctx,540,0,0.045,'square',0.055,360);
+  } else if(type==='correct'){
+    playTone(ctx,660,0,0.09,'sine',0.08);
+    playTone(ctx,920,0.07,0.12,'sine',0.075);
+  } else if(type==='wrong'){
+    playTone(ctx,190,0,0.16,'sawtooth',0.055,95);
+  }
+}
+
 function bindMoveStick(){
   const stick=document.getElementById('move-stick');
   const thumb=document.getElementById('move-stick-thumb');
@@ -1311,6 +1360,10 @@ window.addEventListener('DOMContentLoaded',()=>{
   loadAssets(()=>{
     loading.classList.add('hidden');
     renderPreviews();
+  });
+
+  document.querySelectorAll('button,.char-card').forEach(el=>{
+    el.addEventListener('pointerdown',()=>playSound('click'),{passive:true});
   });
 
   document.getElementById('btn-start').addEventListener('click',()=>showScreen('s-charsel'));
