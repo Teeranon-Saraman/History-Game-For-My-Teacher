@@ -949,8 +949,13 @@ function drawShadow(cx,cy){
 }
 
 function drawPlayer(){
-  const row = player.dir===2?0 : player.dir===0?1 : 2;
-  const col = player.frame%4;
+  const anim = player.dir===2
+    ? {row:0, cols:[0,1]}
+    : player.dir===0
+      ? {row:1, cols:[0,1,2,3]}
+      : {row:2, cols:[0,1,2,3]};
+  const row = anim.row;
+  const col = anim.cols[player.frame%anim.cols.length];
   const frame=sprites.chars[player.char]?.[row]?.[col]||sprites.chars.boy?.[row]?.[col];
   if(!frame){
     ctx.fillStyle='#E76F51';
