@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ยุคหินในดินแดนไทย</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="s-title" class="screen active">
+  <div class="stars-bg"></div>
+  <div class="title-content">
+    <div class="title-logo">⛏️</div>
+    <div class="title-text">ยุคหิน<br>ดินแดนไทย</div>
+    <div class="title-sub">การผจญภัยของนักโบราณคดี</div>
+    <button class="pxbtn green" id="btn-start">▶ เริ่มเกม</button>
+    <div class="key-hint">WASD / ↑↓←→ เดิน &nbsp;|&nbsp; E หรือ Space ขุด/คุย</div>
+  </div>
+</div>
+
+<div id="s-charsel" class="screen">
+  <div class="charsel-wrap">
+    <div class="charsel-title">✦ เลือกตัวละคร ✦</div>
+    <div class="char-row">
+      <div class="char-card selected" id="card-boy" data-char="boy">
+        <canvas id="prev-boy" width="80" height="80"></canvas>
+        <div class="char-name">เด็กชาย</div>
+        <div class="char-desc">นักขุดค้นผู้กล้าหาญ</div>
+      </div>
+      <div class="char-card" id="card-girl" data-char="girl">
+        <canvas id="prev-girl" width="80" height="80"></canvas>
+        <div class="char-name">เด็กหญิง</div>
+        <div class="char-desc">นักโบราณคดีฉลาด</div>
+      </div>
+    </div>
+    <button class="pxbtn green" id="btn-confirm-char">✓ เลือก!</button>
+    <button class="pxbtn" id="btn-back-title">← กลับ</button>
+  </div>
+</div>
+
+<div id="s-game" class="screen">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="hud">
+    <div class="hud-left">
+      <div id="hud-hearts" class="hud-hearts">❤️❤️❤️</div>
+      <div class="hud-lv">LV <span id="hud-lv-num">1</span></div>
+      <div class="xp-wrap"><div id="xp-bar" class="xp-bar"></div></div>
+    </div>
+    <div class="hud-center">
+      <div id="hud-score" class="hud-score">⭐ 0</div>
+      <div id="hud-combo" class="hud-combo" style="display:none">🔥 x<span id="combo-n">0</span></div>
+    </div>
+    <div class="hud-right">
+      <div id="hud-day" class="hud-day">วันที่ 1</div>
+      <div id="hud-art" class="hud-art">โบราณวัตถุ 0/12</div>
+    </div>
+  </div>
+
+  <div id="dialog" class="dialog-box" style="display:none">
+    <div id="dlg-name" class="dlg-name">ผู้เฒ่า</div>
+    <div id="dlg-text" class="dlg-text">...</div>
+    <div class="dlg-next">▼ กด E เพื่อปิด</div>
+  </div>
+
+  <div id="mobile-controls" style="display:none">
+    <div id="dpad">
+      <div class="dp-cell"></div>
+      <button class="dp-btn" id="dp-up">▲</button>
+      <div class="dp-cell"></div>
+      <button class="dp-btn" id="dp-left">◄</button>
+      <div class="dp-cell dp-center"></div>
+      <button class="dp-btn" id="dp-right">►</button>
+      <div class="dp-cell"></div>
+      <button class="dp-btn" id="dp-down">▼</button>
+      <div class="dp-cell"></div>
+    </div>
+    <button id="btn-action" class="action-btn">⚡<br><span>E</span></button>
+  </div>
+</div>
+
+<div id="quiz-modal" class="modal-bg" style="display:none">
+  <div class="quiz-card">
+    <div id="qz-topbar" class="qz-topbar paleo">
+      <span id="qz-icon">🪓</span>
+      <span id="qz-era">ยุคหินเก่า</span>
+      <span id="qz-pts" class="qz-pts">+100</span>
+    </div>
+    <div class="qz-timerbar"><div id="qz-tfill" class="qz-tfill"></div></div>
+    <div id="qz-question" class="qz-question">คำถาม</div>
+    <div id="qz-choices" class="qz-choices"></div>
+    <div id="qz-feedback" class="qz-feedback" style="display:none"></div>
+    <button id="qz-next" class="pxbtn green qz-next-btn" style="display:none">ขุดค้นต่อ ⛏️</button>
+  </div>
+</div>
+
+<div id="s-result" class="screen">
+  <div class="result-wrap">
+    <div id="r-trophy" class="r-trophy">🏆</div>
+    <div id="r-title" class="r-title">ยอดเยี่ยม!</div>
+    <div id="r-sub" class="r-sub">นักโบราณคดีฝีมือเยี่ยม</div>
+    <div id="r-score" class="r-score">0</div>
+    <div class="r-score-lbl">คะแนน</div>
+    <div class="r-grid">
+      <div class="rg"><div class="rg-l">ตอบถูก</div><div class="rg-v" id="r-correct">0/12</div></div>
+      <div class="rg"><div class="rg-l">Combo max</div><div class="rg-v" id="r-combo">0x</div></div>
+      <div class="rg"><div class="rg-l">LV สุดท้าย</div><div class="rg-v" id="r-lv">1</div></div>
+      <div class="rg"><div class="rg-l">สถิติสูงสุด</div><div class="rg-v" id="r-best">0</div></div>
+    </div>
+    <button class="pxbtn green" id="btn-replay">▶ เล่นอีกครั้ง</button>
+    <button class="pxbtn" id="btn-result-home">🏠 หน้าหลัก</button>
+  </div>
+</div>
+
+<script src="map-data.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
