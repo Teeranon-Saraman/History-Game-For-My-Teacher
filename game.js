@@ -180,6 +180,7 @@ const player = {
 const keyDown={};
 let interactFlag=false;
 let interactPressed=false;
+let joystickDir=null;
 
 let mapTiles=[], tileRotations=[], digSites=[];
 const NPC_POS   = {x:3,y:4};
@@ -557,7 +558,8 @@ function update(dt){
   }
 
   let mx=0,my=0;
-  if(keyDown['ArrowUp']   ||keyDown['w']||keyDown['W']) my=-1;
+  if(joystickDir){mx=joystickDir.mx;my=joystickDir.my;}
+  else if(keyDown['ArrowUp']   ||keyDown['w']||keyDown['W']) my=-1;
   else if(keyDown['ArrowDown'] ||keyDown['s']||keyDown['S']) my=1;
   else if(keyDown['ArrowLeft'] ||keyDown['a']||keyDown['A']) mx=-1;
   else if(keyDown['ArrowRight']||keyDown['d']||keyDown['D']) mx=1;
@@ -1206,6 +1208,7 @@ async function startNewGame(charChoice){
   for(const k in keyDown) keyDown[k]=false;
   interactFlag=false;
   interactPressed=false;
+  joystickDir=null;
   document.getElementById('dialog').style.display='none';
   updateHUD();
 
@@ -1243,6 +1246,54 @@ window.addEventListener('keydown',e=>{
   if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
 });
 window.addEventListener('keyup',e=>{keyDown[e.key]=false;});
+window.addEventListener('selectstart',e=>e.preventDefault());
+window.addEventListener('dragstart',e=>e.preventDefault());
+window.addEventListener('contextmenu',e=>e.preventDefault());
+
+function bindMoveStick(){
+  const stick=document.getElementById('move-stick');
+  const thumb=document.getElementById('move-stick-thumb');
+  if(!stick||!thumb) return;
+  let activeId=null;
+  const radius=42;
+  const dead=14;
+  const reset=()=>{
+    activeId=null;
+    joystickDir=null;
+    stick.classList.remove('active');
+    thumb.style.transform='translate(-50%,-50%)';
+  };
+  const apply=(x,y)=>{
+    const rect=stick.getBoundingClientRect();
+    const cx=rect.left+rect.width/2;
+    const cy=rect.top+rect.height/2;
+    const dx=x-cx;
+    const dy=y-cy;
+    const dist=Math.hypot(dx,dy);
+    const clamped=Math.min(radius,dist);
+    const ux=dist?dx/dist:0;
+    const uy=dist?dy/dist:0;
+    thumb.style.transform=`translate(calc(-50% + ${ux*clamped}px), calc(-50% + ${uy*clamped}px))`;
+    if(dist<dead){joystickDir=null;return;}
+    if(Math.abs(dx)>Math.abs(dy)) joystickDir={mx:dx>0?1:-1,my:0};
+    else joystickDir={mx:0,my:dy>0?1:-1};
+  };
+  stick.addEventListener('pointerdown',e=>{
+    activeId=e.pointerId;
+    stick.setPointerCapture(e.pointerId);
+    stick.classList.add('active');
+    apply(e.clientX,e.clientY);
+    e.preventDefault();
+  });
+  stick.addEventListener('pointermove',e=>{
+    if(e.pointerId!==activeId) return;
+    apply(e.clientX,e.clientY);
+    e.preventDefault();
+  });
+  stick.addEventListener('pointerup',e=>{if(e.pointerId===activeId) reset();});
+  stick.addEventListener('pointercancel',e=>{if(e.pointerId===activeId) reset();});
+  stick.addEventListener('lostpointercapture',reset);
+}
 
 let selectedChar='boy';
 window.addEventListener('DOMContentLoaded',()=>{
@@ -1271,14 +1322,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     });
   });
 
-  const dirs={'dp-up':'ArrowUp','dp-down':'ArrowDown','dp-left':'ArrowLeft','dp-right':'ArrowRight'};
-  Object.entries(dirs).forEach(([id,key])=>{
-    const btn=document.getElementById(id);
-    if(!btn) return;
-    btn.addEventListener('pointerdown',e=>{keyDown[key]=true;e.preventDefault();});
-    btn.addEventListener('pointerup',  ()=>{keyDown[key]=false;});
-    btn.addEventListener('pointerleave',()=>{keyDown[key]=false;});
-  });
+  bindMoveStick();
   const ab=document.getElementById('btn-action');
   if(ab) ab.addEventListener('pointerdown',e=>{interactFlag=true;e.preventDefault();});
 });
